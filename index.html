@@ -749,19 +749,39 @@ function startCountdown(){
 function captureWebcam(){
   $('flash').classList.add('go');
   setTimeout(()=>$('flash').classList.remove('go'),350);
+
+  const W=640, H=480; // fixed 4:3 output
   const cv=document.createElement('canvas');
-  const vw=video.videoWidth||640, vh=video.videoHeight||480;
-  cv.width=vw; cv.height=vh;
+  cv.width=W; cv.height=H;
   const cc=cv.getContext('2d');
-  cc.save(); cc.translate(vw,0); cc.scale(-1,1); cc.drawImage(video,0,0,vw,vh); cc.restore();
-  // bake live stickers
-  const sz=Math.min(vw,vh)*.1;
-  liveStickers.forEach(st=>{cc.font=sz+'px serif';cc.fillText(st.emoji,st.x*vw-sz*.5,st.y*vh+sz*.4);});
-  // bake frame
+
+  const vw=video.videoWidth||640, vh=video.videoHeight||480;
+
+  // Centre-crop video to 4:3, matching gallery behaviour
+  const srcAR=vw/vh, dstAR=W/H;
+  let sx=0,sy=0,sw=vw,sh=vh;
+  if(srcAR>dstAR){ sw=vh*dstAR; sx=(vw-sw)/2; }
+  else if(srcAR<dstAR){ sh=vw/dstAR; sy=(vh-sh)/2; }
+
+  // Draw mirrored (selfie-style) and cropped
+  cc.save();
+  cc.translate(W,0); cc.scale(-1,1);
+  cc.drawImage(video, sx, sy, sw, sh, 0, 0, W, H);
+  cc.restore();
+
+  // bake live stickers (normalised 0-1 coords map to W x H)
+  const sz=Math.min(W,H)*.1;
+  liveStickers.forEach(st=>{
+    cc.font=sz+'px serif';
+    cc.fillText(st.emoji, st.x*W - sz*.5, st.y*H + sz*.4);
+  });
+
+  // bake frame overlay
   if(FRAMES[selFrame]?.draw){
-    const tmp=document.createElement('canvas'); tmp.width=vw; tmp.height=vh;
-    FRAMES[selFrame].draw(tmp,vw,vh); cc.drawImage(tmp,0,0);
+    const tmp=document.createElement('canvas'); tmp.width=W; tmp.height=H;
+    FRAMES[selFrame].draw(tmp,W,H); cc.drawImage(tmp,0,0);
   }
+
   setTimeout(()=>{ savePhoto(cv); isCounting=false; },30);
 }
 
