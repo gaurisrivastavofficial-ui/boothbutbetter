@@ -1004,63 +1004,78 @@ updateProgress();
 function renderTemplatePreview(){
   if(selectedTpl === 'custom' || !selectedTpl){ renderFinalCanvas(); return; }
   const tpl = selectedTpl;
+  const slots = tpl.slots ? tpl.slots : (tpl.slot ? [tpl.slot] : []);
 
-  // Load template image
-  const tplImg = new Image();
-  tplImg.crossOrigin = 'anonymous';
-  tplImg.onload = () => {
-    const TW = tplImg.naturalWidth, TH = tplImg.naturalHeight;
+  // First load all user photos (base64 data URLs — always safe)
+  const loadedPhotos = [];
+  let toLoad = slots.length;
+  if(toLoad === 0){ compositeAndShow([], null); return; }
+
+  slots.forEach((slot, i) => {
+    if(!photos[i]){ loadedPhotos[i]=null; if(--toLoad===0) loadTemplate(); return; }
+    const img = new Image();
+    img.onload = () => { loadedPhotos[i]=img; if(--toLoad===0) loadTemplate(); };
+    img.onerror = () => { loadedPhotos[i]=null; if(--toLoad===0) loadTemplate(); };
+    img.src = photos[i]; // base64 — no CORS issue
+  });
+
+  function loadTemplate(){
+    const tplImg = new Image();
+    // NO crossOrigin here — same-origin on Vercel, crossOrigin would cause issues
+    tplImg.onload = () => compositeAndShow(loadedPhotos, tplImg);
+    tplImg.onerror = () => {
+      // Still show photos without template if image fails
+      compositeAndShow(loadedPhotos, null);
+    };
+    tplImg.src = 'templates/' + tpl.file;
+  }
+
+  function compositeAndShow(userImgs, tplImg){
+    const TW = tplImg ? tplImg.naturalWidth : 800;
+    const TH = tplImg ? tplImg.naturalHeight : 800;
     const fc = $('final-cv');
     fc.width = TW; fc.height = TH;
     const cc = fc.getContext('2d');
 
-    let slots = tpl.slots ? tpl.slots : (tpl.slot ? [tpl.slot] : []);
-
     cc.fillStyle = '#ffffff'; cc.fillRect(0,0,TW,TH);
 
-    // Draw each user photo into its slot
-    const drawAll = (idx) => {
-      if(idx >= slots.length){ finish(); return; }
-      const slot = slots[idx];
-      if(!photos[idx]){ drawAll(idx+1); return; }
+    // Draw user photos into slots first
+    slots.forEach((slot, i) => {
+      const userImg = userImgs[i];
+      if(!userImg) return;
       const px=slot.x*TW, py=slot.y*TH, pw=slot.w*TW, ph=slot.h*TH;
-      const userImg = new Image();
-      userImg.onload = () => {
-        cc.save();
-        if(tpl.clipShape==='oval'){
-          cc.beginPath(); cc.ellipse(px+pw/2,py+ph/2,pw/2,ph/2,0,0,Math.PI*2); cc.clip();
-        } else if(tpl.clipShape==='heart'){
-          drawHeart(cc,px,py,pw,ph); cc.clip();
-        } else {
-          cc.beginPath(); cc.rect(px,py,pw,ph); cc.clip();
-        }
-        // cover-fit photo into slot
-        const iW=userImg.naturalWidth||640, iH=userImg.naturalHeight||480;
-        const imgAR=iW/iH, slotAR=pw/ph;
-        let sx=0,sy=0,sw=iW,sh=iH;
-        if(imgAR>slotAR){ sw=iH*slotAR; sx=(iW-sw)/2; }
-        else{ sh=iW/slotAR; sy=(iH-sh)/2; }
-        cc.drawImage(userImg,sx,sy,sw,sh,px,py,pw,ph);
-        cc.restore();
-        drawAll(idx+1);
-      };
-      userImg.onerror = () => drawAll(idx+1);
-      userImg.src = photos[idx];
-    };
+      cc.save();
+      if(tpl.clipShape==='oval'){
+        cc.beginPath(); cc.ellipse(px+pw/2,py+ph/2,pw/2,ph/2,0,0,Math.PI*2); cc.clip();
+      } else if(tpl.clipShape==='heart'){
+        drawHeart(cc,px,py,pw,ph); cc.clip();
+      } else {
+        cc.beginPath(); cc.rect(px,py,pw,ph); cc.clip();
+      }
+      const iW=userImg.naturalWidth||640, iH=userImg.naturalHeight||480;
+      const imgAR=iW/iH, slotAR=pw/ph;
+      let sx=0,sy=0,sw=iW,sh=iH;
+      if(imgAR>slotAR){ sw=iH*slotAR; sx=(iW-sw)/2; }
+      else{ sh=iW/slotAR; sy=(iH-sh)/2; }
+      try{ cc.drawImage(userImg,sx,sy,sw,sh,px,py,pw,ph); }
+      catch(e){ console.warn('draw photo failed',e); }
+      cc.restore();
+    });
 
-    const finish = () => {
-      cc.drawImage(tplImg,0,0,TW,TH); // template overlay on top
-      try{ $('prev-img').src=fc.toDataURL('image/png'); }
-      catch(e){ try{ $('prev-img').src=fc.toDataURL('image/jpeg',0.92); }catch(e2){} }
-      showPage('pg-preview');
-    };
+    // Draw template overlay on top
+    if(tplImg){
+      try{ cc.drawImage(tplImg,0,0,TW,TH); }
+      catch(e){ console.warn('template draw failed',e); }
+    }
 
-    drawAll(0);
-  };
-  tplImg.onerror = () => {
-    alert('Could not load template image. Make sure images are uploaded to the templates/ folder on GitHub.');
-  };
-  tplImg.src = 'templates/' + tpl.file;
+    // Export — try PNG first, fallback to JPEG
+    let url='';
+    try{ url=fc.toDataURL('image/png'); }
+    catch(e){ try{ url=fc.toDataURL('image/jpeg',0.92); }catch(e2){ url=''; } }
+
+    if(url){ $('prev-img').src=url; }
+    showPage('pg-preview');
+  }
 }
 
 function drawHeart(ctx, x, y, w, h){
