@@ -515,17 +515,17 @@ $('prev-meta').textContent  = 'booth. · ' + dateStr;
 
 const TEMPLATES = {
   polaroid: [
-    {id:'peach-gingham',  name:'Peach Gingham',  file:'peach-gingham.jpeg',  photos:1, slot:{x:0.08,y:0.05,w:0.84,h:0.72}},
-    {id:'cherry',         name:'Cherry',          file:'cherry.jpeg',          photos:1, slot:{x:0.08,y:0.04,w:0.84,h:0.72}},
-    {id:'pink-bows',      name:'Pink Bows',        file:'pink-bows.jpeg',       photos:1, slot:{x:0.08,y:0.04,w:0.84,h:0.68}},
-    {id:'beige-gingham',  name:'Beige Gingham',   file:'beige-gingham.jpeg',   photos:1, slot:{x:0.08,y:0.04,w:0.84,h:0.72}},
-    {id:'pink-gingham',   name:'Pink Gingham',    file:'pink-gingham.jpeg',    photos:1, slot:{x:0.08,y:0.04,w:0.84,h:0.72}},
-    {id:'blue-scallop',   name:'Blue Scallop',    file:'blue-scallop.jpeg',    photos:1, slot:{x:0.10,y:0.05,w:0.80,h:0.74}},
-    {id:'floral-vine',    name:'Floral Vine',     file:'floral-vine.jpeg',     photos:1, slot:{x:0.08,y:0.04,w:0.84,h:0.68}},
-    {id:'purple-floral',  name:'Purple Floral',   file:'purple-floral.jpeg',   photos:1, slot:{x:0.08,y:0.04,w:0.84,h:0.68}},
-    {id:'stars',          name:'Stars',           file:'stars.jpeg',           photos:1, slot:{x:0.08,y:0.05,w:0.84,h:0.68}},
-    {id:'strawberry',     name:'Strawberry',      file:'strawberry.jpeg',      photos:1, slot:{x:0.08,y:0.04,w:0.84,h:0.68}},
-    {id:'snoopy',         name:'Snoopy',          file:'snoopy.jpeg',          photos:1, slot:{x:0.12,y:0.04,w:0.76,h:0.62}},
+    {id:'peach-gingham',  name:'Peach Gingham',  file:'peach-gingham.jpeg',  photos:1, slot:{x:0.06,y:0.04,w:0.88,h:0.75}},
+    {id:'cherry',         name:'Cherry',          file:'cherry.jpeg',          photos:1, slot:{x:0.06,y:0.04,w:0.88,h:0.75}},
+    {id:'pink-bows',      name:'Pink Bows',        file:'pink-bows.jpeg',       photos:1, slot:{x:0.06,y:0.04,w:0.88,h:0.75}},
+    {id:'beige-gingham',  name:'Beige Gingham',   file:'beige-gingham.jpeg',   photos:1, slot:{x:0.06,y:0.04,w:0.88,h:0.75}},
+    {id:'pink-gingham',   name:'Pink Gingham',    file:'pink-gingham.jpeg',    photos:1, slot:{x:0.06,y:0.04,w:0.88,h:0.75}},
+    {id:'blue-scallop',   name:'Blue Scallop',    file:'blue-scallop.jpeg',    photos:1, slot:{x:0.07,y:0.04,w:0.86,h:0.76}},
+    {id:'floral-vine',    name:'Floral Vine',     file:'floral-vine.jpeg',     photos:1, slot:{x:0.06,y:0.04,w:0.88,h:0.75}},
+    {id:'purple-floral',  name:'Purple Floral',   file:'purple-floral.jpeg',   photos:1, slot:{x:0.06,y:0.04,w:0.88,h:0.75}},
+    {id:'stars',          name:'Stars',           file:'stars.jpeg',           photos:1, slot:{x:0.06,y:0.04,w:0.88,h:0.75}},
+    {id:'strawberry',     name:'Strawberry',      file:'strawberry.jpeg',      photos:1, slot:{x:0.06,y:0.04,w:0.88,h:0.75}},
+    {id:'snoopy',         name:'Snoopy',          file:'snoopy.jpeg',          photos:1, slot:{x:0.10,y:0.03,w:0.80,h:0.72}},
   ],
   camera: [
     {id:'sony-pink',      name:'Sony Pink',       file:'sony-pink.jpeg',       photos:1, slot:{x:0.04,y:0.12,w:0.64,h:0.60}, landscape:true},
@@ -1020,13 +1020,11 @@ function renderTemplatePreview(){
   });
 
   function loadTemplate(){
+    console.log('photos array length:', photos.length, 'filled:', photos.filter(Boolean).length);
+    console.log('loadedPhotos filled:', loadedPhotos.filter(Boolean).length);
     const tplImg = new Image();
-    // NO crossOrigin here — same-origin on Vercel, crossOrigin would cause issues
-    tplImg.onload = () => compositeAndShow(loadedPhotos, tplImg);
-    tplImg.onerror = () => {
-      // Still show photos without template if image fails
-      compositeAndShow(loadedPhotos, null);
-    };
+    tplImg.onload = () => { console.log('template loaded OK, size:', tplImg.naturalWidth+'x'+tplImg.naturalHeight); compositeAndShow(loadedPhotos, tplImg); };
+    tplImg.onerror = () => { console.warn('template image failed'); compositeAndShow(loadedPhotos, null); };
     tplImg.src = 'templates/' + tpl.file;
   }
 
@@ -1036,8 +1034,6 @@ function renderTemplatePreview(){
     const fc = $('final-cv');
     fc.width = TW; fc.height = TH;
     const cc = fc.getContext('2d');
-
-    cc.fillStyle = '#ffffff'; cc.fillRect(0,0,TW,TH);
 
     // Draw user photos into slots first
     slots.forEach((slot, i) => {
