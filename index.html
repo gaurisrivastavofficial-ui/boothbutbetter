@@ -72,7 +72,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;o
 ════════════════════════════════════ */
 #pg-home{background:var(--cream);align-items:center;justify-content:center;cursor:pointer;}
 #pg-home::before,#pg-home::after{content:'';position:absolute;left:36px;right:36px;height:1px;background:var(--border);}
-#pg-home::before{top:28px;}#pg-home::after{bottom:28px;}
+#pg-home::before{top:28px;}#pg-home::after{bottom:62px;}
 .home-corner{position:absolute;top:36px;left:0;right:0;display:flex;justify-content:space-between;
   padding:0 40px;font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--inkmuted);}
 .booth-wrap{position:relative;width:min(260px,62vw);margin-bottom:36px;
@@ -89,7 +89,12 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;o
   font-weight:300;text-align:center;line-height:1;}
 .home-title em{font-style:italic;color:var(--accd);}
 .home-sub{margin-top:10px;font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--inkmuted);text-align:center;}
-.click-hint{position:absolute;bottom:42px;left:0;right:0;text-align:center;
+.home-credit{position:absolute;bottom:36px;left:0;right:0;text-align:center;
+  font-size:0.68rem;letter-spacing:0.12em;color:var(--inkmuted);z-index:10;font-weight:400;}
+.home-credit a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--acc);
+  padding-bottom:1px;transition:color 0.15s,border-color 0.15s;font-weight:500;}
+.home-credit a:hover{color:var(--accd);border-color:var(--accd);}
+.click-hint{position:absolute;bottom:72px;left:0;right:0;text-align:center;
   font-size:0.64rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--inkfaint);
   animation:hint 2.4s ease-in-out infinite;}
 @keyframes hint{0%,100%{opacity:0.3}50%{opacity:0.9}}
@@ -355,6 +360,9 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;o
   <div class="home-title">step <em>inside</em></div>
   <div class="home-sub">your personal photo booth</div>
   <div class="click-hint">tap anywhere to begin</div>
+  <div class="home-credit" onclick="event.stopPropagation()">
+    made by <a href="https://www.linkedin.com/in/gaurisrivastav?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=ios_app" target="_blank" rel="noopener noreferrer">Gauri Srivastav</a>
+  </div>
 </div>
 
 
